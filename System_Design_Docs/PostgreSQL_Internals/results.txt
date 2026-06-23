@@ -1,0 +1,123 @@
+Timing is on.
+ db_size 
+---------
+ 36 MB
+(1 row)
+
+Time: 1.332 ms
+ students_heap | students_pages |  total  
+---------------+----------------+---------
+ 4744 kB       |            593 | 7368 kB
+(1 row)
+
+Time: 0.751 ms
+ enr_heap | enr_pages 
+----------+-----------
+ 13 MB    |      1667
+(1 row)
+
+Time: 0.189 ms
+                                                                                   QUERY PLAN                                                                                    
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=5121.92..5121.94 rows=7 width=49) (actual time=19.272..20.951 rows=4 loops=1)
+   Sort Key: (count(*)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=2890 read=8
+   ->  Finalize GroupAggregate  (cost=5120.86..5121.83 rows=7 width=49) (actual time=19.242..20.926 rows=4 loops=1)
+         Group Key: c.name
+         Buffers: shared hit=2887 read=8
+         ->  Gather Merge  (cost=5120.86..5121.67 rows=7 width=49) (actual time=19.228..20.909 rows=8 loops=1)
+               Workers Planned: 1
+               Workers Launched: 1
+               Buffers: shared hit=2887 read=8
+               ->  Sort  (cost=4120.85..4120.87 rows=7 width=49) (actual time=17.019..17.022 rows=4 loops=2)
+                     Sort Key: c.name
+                     Sort Method: quicksort  Memory: 25kB
+                     Buffers: shared hit=2887 read=8
+                     Worker 0:  Sort Method: quicksort  Memory: 25kB
+                     ->  Partial HashAggregate  (cost=4120.67..4120.75 rows=7 width=49) (actual time=16.985..16.990 rows=4 loops=2)
+                           Group Key: c.name
+                           Batches: 1  Memory Usage: 24kB
+                           Buffers: shared hit=2879 read=8
+                           Worker 0:  Batches: 1  Memory Usage: 24kB
+                           ->  Hash Join  (cost=856.61..4089.13 rows=4205 width=15) (actual time=3.235..16.349 rows=3572 loops=2)
+                                 Hash Cond: (e.course_id = c.id)
+                                 Buffers: shared hit=2879 read=8
+                                 ->  Hash Join  (cost=855.45..4070.25 rows=4205 width=14) (actual time=3.173..15.821 rows=3572 loops=2)
+                                       Hash Cond: (e.student_id = s.id)
+                                       Buffers: shared hit=2862 read=8
+                                       ->  Parallel Seq Scan on enrollments e  (cost=0.00..3137.59 rows=29408 width=16) (actual time=0.005..9.926 rows=25000 loops=2)
+                                             Filter: (term = '2025-FALL'::text)
+                                             Rows Removed by Filter: 75000
+                                             Buffers: shared hit=1667
+                                       ->  Hash  (cost=766.08..766.08 rows=7150 width=14) (actual time=3.145..3.146 rows=7142 loops=2)
+                                             Buckets: 8192  Batches: 1  Memory Usage: 399kB
+                                             Buffers: shared hit=1195 read=8
+                                             ->  Bitmap Heap Scan on students s  (cost=83.70..766.08 rows=7150 width=14) (actual time=0.354..2.318 rows=7142 loops=2)
+                                                   Recheck Cond: (city = 'Bangalore'::text)
+                                                   Heap Blocks: exact=593
+                                                   Buffers: shared hit=1195 read=8
+                                                   ->  Bitmap Index Scan on idx_students_city  (cost=0.00..81.92 rows=7150 width=0) (actual time=0.278..0.278 rows=7142 loops=2)
+                                                         Index Cond: (city = 'Bangalore'::text)
+                                                         Buffers: shared hit=9 read=8
+                                 ->  Hash  (cost=1.07..1.07 rows=7 width=17) (actual time=0.045..0.046 rows=7 loops=2)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                       Buffers: shared hit=2
+                                       ->  Seq Scan on courses c  (cost=0.00..1.07 rows=7 width=17) (actual time=0.021..0.022 rows=7 loops=2)
+                                             Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=219 read=5
+ Planning Time: 1.618 ms
+ Execution Time: 21.087 ms
+(50 rows)
+
+Time: 23.559 ms
+ attname | n_distinct | null_frac | avg_width | n_mcv 
+---------+------------+-----------+-----------+-------
+ id      |         -1 |         0 |         8 |      
+ name    |         -1 |         0 |        13 |      
+ email   |         -1 |         0 |        23 |      
+ city    |          7 |         0 |         7 |     7
+ cgpa    |        400 |         0 |         6 |     4
+ joined  |       1000 |         0 |         4 |     6
+(6 rows)
+
+Time: 1.683 ms
+BEGIN
+Time: 0.019 ms
+ id |   name    | xmin | xmax | ctid  
+----+-----------+------+------+-------
+  1 | Student_1 |  755 |  757 | (0,1)
+(1 row)
+
+Time: 0.075 ms
+UPDATE 1
+Time: 0.244 ms
+ id |   name    | xmin | xmax |   ctid   
+----+-----------+------+------+----------
+  1 | Student_1 |  766 |    0 | (592,16)
+(1 row)
+
+Time: 0.073 ms
+ROLLBACK
+Time: 0.032 ms
+        rel        | pages_in_buffers 
+-------------------+------------------
+ enrollments       |             1671
+ students          |              597
+ idx_students_city |               10
+ idx_enr_student   |                6
+ courses           |                1
+(5 rows)
+
+Time: 4.847 ms
+ pg_current_wal_lsn 
+--------------------
+ 0/16A9DCA8
+(1 row)
+
+Time: 0.066 ms
+psql:/Users/vibhutibhatnagar/Desktop/SST STUDY/ADBMS ASSIGNMENT 1/System_Design_Docs/PostgreSQL_Internals/queries.sql:50: ERROR:  column "level" does not exist
+LINE 1: SELECT type, level, live_items, dead_items, page_size, free_...
+                     ^
+Time: 0.270 ms
